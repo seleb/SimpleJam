@@ -18,27 +18,54 @@ function _init()
  player.vx = 0
  player.vy = 0
  player.va = 0
+ player.air = true
  
  cam.x = player.x
  cam.y = player.y
 end
 
 function _update()
- local speed = 5
- if btn(0) then player.vx -= speed end
- if btn(1) then player.vx += speed end
- if btn(2) then player.vy -= speed end
- if btn(3) then player.vy += speed end
-
- if btn(4) then player.va -= speed/3 end
- if btn(5) then player.va += speed/3 end
-
- local ta = atan2(wave(player.x+2) - wave(player.x-2), 1)
- player.va = (ta-player.a)+sin(time()*player.vx)*player.vx/100
-
-	player.vx = lerp(player.vx,0,0.8)
-	player.vy = lerp(player.vy,0,0.8)
- player.va = lerp(player.va,0,0.8)
+ --move
+ local speed = 0.5
+ if btn(0) then
+  player.vx -= speed*sin(player.a)
+  if not player.air then
+   player.vy -= speed*cos(player.a)
+  end
+ end
+ if btn(1) then
+  player.vx += speed*sin(player.a)
+  if not player.air then
+   player.vy += speed*cos(player.a)
+  end
+ end
+ 
+ -- jump
+ if not player.air then
+  if btnp(2) then player.vy = -10 end
+ end
+ 
+ -- angle
+ if not player.air then
+  player.va = atan2(wave(player.x+1.5) - wave(player.x-1.5), 3)-player.a
+ end
+ 
+	player.vx = lerp(0,player.vx,0.8)
+	player.va = lerp(0,player.va,0.5)
+	
+ player.vy += 1
+ 
+ local pwave = wave(player.x)+2
+ if player.y > pwave then
+  if player.air then
+   player.air = false
+  end
+   player.vy -= (player.y-pwave)*0.9
+   player.vy *= 0.8
+ 
+ else
+  player.air = true
+ end
  
  player.x += player.vx
  player.y += player.vy
@@ -117,24 +144,27 @@ function draw_boat()
  --pset(player.x,player.y,0)
 end
 
-function draw_waves()
+function draw_waves()
+ color(2)
+ for x = cam.x,cam.x+128 do
+  local w1 = wave(x)
+  local w2 = wave(x+1)
+  rectfill(x,9+w1,x,12+w2)
+ end
  color(1)
  for x = cam.x,cam.x+128 do
   local w1 = wave(x)
   local w2 = wave(x+1)
-  line(x,10+w1,x,max(11+w1,10+w2))
- end
- color(2)
- for x = cam.x,cam.x+128 do
-  local w1 = wave(x)
-  local w2 = wave(x+1)
-  line(x,12+w1,x,max(13+w1,12+w2))
+  line(x,10+w1,x,10+w2)
  end
 end
 
 function wave(x)
- local w1 = sin((x+time()*3)/64)
- return flr(abs(w1)*5)
+ local t = 64 --period
+ local a = 8 --amplitude
+ local w1 = (x+time()*30)/(t*2)
+ w1 = abs(sin(w1))
+ return flr(w1*a)
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
