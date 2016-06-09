@@ -66,8 +66,6 @@ function _draw()
 end
 
 function draw_boat()
- color(1)
- circ(player.x,player.y,10)
  
  local cpa = cos(player.a)
  local spa = sin(player.a)
@@ -76,8 +74,8 @@ function draw_boat()
  local prow ={}
  local aft = {}
  
- local w = 20
- local h = 10
+ local w = 16
+ local h = 12
  
  mast.x = player.x + cpa*h
  mast.y = player.y - spa*h
@@ -86,15 +84,21 @@ function draw_boat()
  aft.x = player.x - cos(player.a+0.25)*w
  aft.y = player.y + sin(player.a+0.25)*w
  
- color(5)
+ color(1)
  line(player.x,player.y,mast.x,mast.y)
- color(6)
  line(player.x,player.y,prow.x,prow.y)
- color(7)
  line(player.x,player.y,aft.x,aft.y)
  
- 
- for a=0,1,0.1 do
+ -- sail
+ local sail = {}
+ sail.x1 = lerp(mast.x,aft.x,0.6)
+ sail.y1 = lerp(mast.y,aft.y,0.6)
+ sail.x2 = lerp(player.x,mast.x,0.3)
+ sail.y2 = lerp(player.y,mast.y,0.3)
+ line(mast.x,mast.y,sail.x1,sail.y1)
+ line(sail.x1,sail.y1,sail.x2,sail.y2)
+  
+ for a=0.35,0.75,0.1 do
   local ca1 = h*cos(a-0.1)
   local sa1 = w*sin(a-0.1)
   local ca2 = h*cos(a)
@@ -108,6 +112,9 @@ function draw_boat()
   )
   
  end
+ 
+ --color(7)
+ --pset(player.x,player.y,0)
 end
 
 function draw_waves()
@@ -126,7 +133,7 @@ function draw_waves()
 end
 
 function wave(x)
- local w1 = sin((x+time()*3)/50)
+ local w1 = sin((x+time()*3)/64)
  return flr(abs(w1)*5)
 end
 __gfx__
