@@ -33,7 +33,8 @@ function _update()
  if btn(4) then player.va -= speed/3 end
  if btn(5) then player.va += speed/3 end
 
-
+ local ta = atan2(wave(player.x+2) - wave(player.x-2), 1)
+ player.va = (ta-player.a)+sin(time()*player.vx)*player.vx/100
 
 	player.vx = lerp(player.vx,0,0.8)
 	player.vy = lerp(player.vy,0,0.8)
@@ -42,6 +43,7 @@ function _update()
  player.x += player.vx
  player.y += player.vy
  player.a += player.va
+ 
  
  cam.x = lerp(cam.x, player.x-64, 0.25)
  cam.y = lerp(cam.y, player.y-64, 0.25)
@@ -66,7 +68,23 @@ end
 function draw_boat()
  color(1)
  circ(player.x,player.y,10)
- line(player.x,player.y,player.x + cos(player.a)*20, player.y + sin(player.a)*20)
+ 
+ local mast ={}
+ local prow ={}
+ local aft = {}
+ mast.x = player.x + cos(player.a)*20
+ mast.y = player.y - sin(player.a)*20
+ prow.x = player.x + cos(player.a+0.25)*20
+ prow.y = player.y - sin(player.a+0.25)*20
+ aft.x = player.x - cos(player.a+0.25)*20
+ aft.y = player.y + sin(player.a+0.25)*20
+ 
+ color(5)
+ line(player.x,player.y,mast.x,mast.y)
+ color(6)
+ line(player.x,player.y,prow.x,prow.y)
+ color(7)
+ line(player.x,player.y,aft.x,aft.y)
 end
 
 function draw_waves()
