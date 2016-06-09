@@ -29,6 +29,93 @@ function _init()
  cam.x = player.x
  cam.y = player.y
  add(wraps,cam)
+ 
+ 
+ -- sfx
+ -- memory locations fromhttps://gist.github.com/paniq/7814560e2b560b76911b
+  
+  --wah
+  --[[for i=0,8 do
+   poke(0x3200+i,bor(i*i,16))
+  end
+  --poke(0x3200+65, 0)--edit mode
+  poke(0x3200+65, 0x08)--speed
+  poke(0x3200+66, 0)--start
+  poke(0x3200+67, 0)--end]]
+  
+  --bubble
+  --[[for i=0,4 do
+   poke(0x3200+i,(i+4)*(i-4))
+  end
+  --poke(0x3200+65, 0)--edit mode
+  poke(0x3200+65, 0x08)--speed
+  poke(0x3200+66, 0)--start
+  poke(0x3200+67, 0)--end]]
+  
+  --jump
+  --[[for i=0,5 do
+   poke(0x3200+i,(i+3)*(i-2)+4)
+  end
+  --poke(0x3200+65, 0)--edit mode
+  poke(0x3200+65, 0x08)--speed
+  poke(0x3200+66, 0)--start
+  poke(0x3200+67, 0)--end]]
+  
+  --music1
+  for i=0,64 do
+   poke(0x3200+i,sin(i/16)*4+11)
+  end
+  --poke(0x3200+65, 0)--edit mode
+  poke(0x3200+65, 0x32)--speed
+  poke(0x3200+66, 0)--start
+  poke(0x3200+67, 0)--end
+  
+  --music2
+  for i=0,64 do
+   poke(0x3200+i+68,sin(i/16)*8+40 + i/8)
+  end
+  --poke(0x3200+65+68, 0)--edit mode
+  poke(0x3200+65+68, 0x32)--speed
+  poke(0x3200+66+68, 0)--start
+  poke(0x3200+67+68, 0)--end
+  
+  --music3
+  for i=0,64 do
+   poke(0x3200+i+136,sin(i/16)*2-87 - i/15)
+  end
+  --poke(0x3200+65+68, 0)--edit mode
+  poke(0x3200+65+136, 0x32)--speed
+  poke(0x3200+66+136, 0)--start
+  poke(0x3200+67+136, 0)--end
+  
+  
+  -- song
+  poke(0x3100+0,0+128)
+  poke(0x3100+4,0)
+  poke(0x3100+5,1)
+  poke(0x3100+8,0)
+  poke(0x3100+9,2+128)
+  music(0)
+  
+  --rumble
+  --[[for i=0,64 do
+   poke(0x3200+i+68,flr(abs(i-32)/32*0x09+3+0x00))
+  end
+  --poke(0x3200+65+68, 0)--edit mode
+  poke(0x3200+65+68, 0x1)--speed
+  poke(0x3200+66+68, 0)--start
+  poke(0x3200+67+68, 0)--end]]
+  
+  --shoot
+  --[[for i=0,32 do
+   poke(0x3200+i+136,flr(abs(i-16)/8*0x09+3+0x00))
+  end
+  --poke(0x3200+65+136, 0)--edit mode
+  poke(0x3200+65+136, 0x01)--speed
+  poke(0x3200+66+136, 0)--start
+  poke(0x3200+67+136, 0)--end]]
+  
+  
 end
 
 function particle(x,y,vx,vy,r)
@@ -274,6 +361,10 @@ function _update()
   end
  end
  
+ 
+ 
+ 
+ -- actually move main stuff
  player.oldx = player.x
  player.oldy = player.y
  
@@ -281,8 +372,12 @@ function _update()
  player.y += player.vy
  player.a += player.va
  
- cam.x = lerp(cam.x, player.x-64, 0.25)
- cam.y = lerp(cam.y, player.y-64, 0.25)
+ cam.x = lerp(cam.x, player.x-42, 0.2)
+ cam.y = lerp(cam.y, player.y-64, 0.2)
+ 
+ if btnp(5) then
+  sfx(0,0)
+  end
 end
 
 function draw_splashes(s)
@@ -299,11 +394,36 @@ function draw_bubbles(b)
  circfill(b.x,b.y,b.r-1)
 end
 
-function _draw()
- -- clear
+function draw_bg()
+-- clear
  camera(0,0)
  color(2)
  rectfill(0,0,128,128)
+ camera(-100,cam.y-player.y/20+64)
+ 
+ --sun
+ local offset = time()%512-128
+ color(1)
+ circfill(0,offset,5)
+ for a=0,1,0.1 do
+  line(0,offset,cos(a+time()/20)*10,offset+sin(a+time()/20)*10)
+ end
+ 
+ --moon + stars
+ color(1)
+ circfill(0,1+offset-256,8)
+ circfill(-30,-10+offset-256,1)
+ circfill(20,4+offset-256,1)
+ circfill(10,24+offset-256,1)
+ pset(30,-30+offset-256,1)
+ pset(-26,-24+offset-256,1)
+ color(2)
+ circfill(4,-1+offset-256,8)
+ 
+end
+
+function _draw()
+ draw_bg()
  -- draw scene
  camera(cam.x, cam.y)
  draw_boat()
@@ -313,8 +433,20 @@ function _draw()
  foreach(clouds, draw_clouds)
  
  camera(0,0)
+ 
+ draw_debug()
+end
+
+function draw_debug()
  color(0)
- print(#wraps)
+ --print(#wraps)
+ 
+ local v = peek(0x3100)
+ print(v,1,1)
+ for x=0,0xff do
+ v = peek(0x3200+x)
+ print(v,flr(x/20)*30,6*(x%20+1))
+ end
 end
 
 function draw_boat()
@@ -369,9 +501,6 @@ function draw_boat()
   )
   
  end
- 
- --color(7)
- --pset(player.x,player.y,0)
 end
 
 function draw_waves()
@@ -379,7 +508,7 @@ function draw_waves()
  for x = cam.x,cam.x+128 do
   local w1 = wave(x)
   local w2 = wave(x+1)
-  rectfill(x,-1+w1,x,5+w2)
+  rectfill(x,-2+w1,x,3+w2)
  end
  color(1)
  for x = cam.x,cam.x+128 do
@@ -575,7 +704,7 @@ __map__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __sfx__
-000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
