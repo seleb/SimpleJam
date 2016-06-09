@@ -69,15 +69,22 @@ function draw_boat()
  color(1)
  circ(player.x,player.y,10)
  
+ local cpa = cos(player.a)
+ local spa = sin(player.a)
+  
  local mast ={}
  local prow ={}
  local aft = {}
- mast.x = player.x + cos(player.a)*20
- mast.y = player.y - sin(player.a)*20
- prow.x = player.x + cos(player.a+0.25)*20
- prow.y = player.y - sin(player.a+0.25)*20
- aft.x = player.x - cos(player.a+0.25)*20
- aft.y = player.y + sin(player.a+0.25)*20
+ 
+ local w = 20
+ local h = 10
+ 
+ mast.x = player.x + cpa*h
+ mast.y = player.y - spa*h
+ prow.x = player.x + cos(player.a+0.25)*w
+ prow.y = player.y - sin(player.a+0.25)*w
+ aft.x = player.x - cos(player.a+0.25)*w
+ aft.y = player.y + sin(player.a+0.25)*w
  
  color(5)
  line(player.x,player.y,mast.x,mast.y)
@@ -85,6 +92,22 @@ function draw_boat()
  line(player.x,player.y,prow.x,prow.y)
  color(7)
  line(player.x,player.y,aft.x,aft.y)
+ 
+ 
+ for a=0,1,0.1 do
+  local ca1 = h*cos(a-0.1)
+  local sa1 = w*sin(a-0.1)
+  local ca2 = h*cos(a)
+  local sa2 = w*sin(a)
+  
+  line(
+   player.x + ca1*cpa - sa1*spa,
+   player.y - (ca1*spa + sa1*cpa),
+   player.x + ca2*cpa - sa2*spa,
+   player.y - (ca2*spa + sa2*cpa)
+  )
+  
+ end
 end
 
 function draw_waves()
