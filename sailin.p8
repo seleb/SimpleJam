@@ -3,15 +3,15 @@ version 7
 __lua__
 cam = {}
 player = {}
-
+bubbles ={}
+splashes = {}
+grav = 1
 
 function lerp(a,b,t)
  return a+(b-a)*t
 end
 
 function _init()
- test = 0
- 
  player.x = 0
  player.y = 0
  player.a = 0
@@ -24,7 +24,43 @@ function _init()
  cam.y = player.y
 end
 
+function update_splashes(s)
+ if s.kill then
+  if s.r > 1 then
+   for i=0,rnd(s.r) do
+    local s2 = {}
+    s2.x = s.x
+    s2.y = s.y
+    s2.vx = rnd(2)*sgn(-s.vx)
+    s2.vy = -rnd(s.vy)-1
+    s2.r = rnd(s.r)
+    add(splashes,s2)
+   end
+  end
+  del(splashes,s)
+  return
+ end
+ s.vy += grav
+ 
+ 
+ s.x += s.vx
+ s.y += s.vy
+ 
+ if s.y+s.r > wave(s.x) and s.vy > 0 then
+  s.kill = true
+  return
+ end
+ 
+ if abs(s.x-cam.x) > 128+s.r
+ or abs(s.y-cam.y) > 128+s.r
+ then
+  s.kill = true
+ end
+end
+
 function _update()
+ foreach(splashes, update_splashes)
+
  --move
  local speed = 0.5
  if btn(0) then
@@ -53,16 +89,24 @@ function _update()
 	player.vx = lerp(0,player.vx,0.8)
 	player.va = lerp(0,player.va,0.5)
 	
- player.vy += 1
+ player.vy += grav
  
- local pwave = wave(player.x)+2
+ local pwave = wave(player.x)-8
  if player.y > pwave then
   if player.air then
    player.air = false
+   for i = 0,abs(player.vy),3 do
+   local s = {}
+   s.x = player.x + 10*sgn(-player.vx) + rnd(6)-3
+   s.y = player.y + rnd(6)-3
+   s.vx = rnd(2)*sgn(-player.vx)
+   s.vy = -rnd(abs(player.vy))-1
+   s.r = flr(rnd(2)+2)
+   add(splashes,s)
+   end
   end
    player.vy -= (player.y-pwave)*0.9
    player.vy *= 0.8
- 
  else
   player.air = true
  end
@@ -76,6 +120,13 @@ function _update()
  cam.y = lerp(cam.y, player.y-64, 0.25)
 end
 
+function draw_splashes(s)
+ color(2)
+ circfill(s.x,s.y,s.r)
+ color(1)
+ circ(s.x,s.y,s.r)
+end
+
 function _draw()
  camera(0,0)
  color(2)
@@ -84,8 +135,9 @@ function _draw()
  camera(cam.x, cam.y)
  
  draw_boat()
- 
  draw_waves()
+ foreach(splashes, draw_splashes)
+ 
  --[[color(2)
  for x = cam.x,cam.x+128 do
   line(x,11+wave(x),x,12+wave(x+1))
@@ -149,13 +201,13 @@ function draw_waves()
  for x = cam.x,cam.x+128 do
   local w1 = wave(x)
   local w2 = wave(x+1)
-  rectfill(x,9+w1,x,12+w2)
+  rectfill(x,-1+w1,x,2+w2)
  end
  color(1)
  for x = cam.x,cam.x+128 do
   local w1 = wave(x)
   local w2 = wave(x+1)
-  line(x,10+w1,x,10+w2)
+  line(x,w1,x,w2)
  end
 end
 
