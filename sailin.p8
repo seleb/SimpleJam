@@ -54,12 +54,58 @@ function update_splashes(s)
  if abs(s.x-cam.x) > 128+s.r
  or abs(s.y-cam.y) > 128+s.r
  then
-  s.kill = true
+  s.kill = true
+  s.r = 0
+ end
+end
+
+
+function update_bubbles(b)
+ if b.kill then
+  if b.r > 1 then
+   for i=0,rnd(b.r) do
+    local b2 = {}
+    b2.x = b.x
+    b2.y = b.y
+    b2.vx = rnd(2)*sgn(-b.vx)
+    b2.vy = rnd(10)+1
+    b2.r = rnd(b.r)
+    add(bubbles,b2)
+   end
+  end
+  del(bubbles,b)
+  return
+ end
+ b.vy -= grav
+ 
+ b.vx *= 0.5
+ b.vy *= 0.5
+ 
+ b.x += b.vx
+ b.y += b.vy
+ 
+ if b.y-b.r < wave(b.x)+3 and b.vy < 0 then
+  b.kill = true
+  return
+ end
+ 
+ if abs(b.x-cam.x) > 128+b.r
+ or abs(b.y-cam.y) > 128+b.r
+ then
+  b.kill = true
+  b.r = 0
+  return
+ end
+ 
+ if flr(rnd(100)) == 1 then
+  b.kill = true
+  b.r += 2
  end
 end
 
 function _update()
  foreach(splashes, update_splashes)
+ foreach(bubbles, update_bubbles)
 
  --move
  local speed = 0.5
@@ -96,13 +142,21 @@ function _update()
   if player.air then
    player.air = false
    for i = 0,abs(player.vy),3 do
-   local s = {}
-   s.x = player.x + 10*sgn(-player.vx) + rnd(6)-3
-   s.y = player.y + rnd(6)-3
-   s.vx = rnd(2)*sgn(-player.vx)
-   s.vy = -rnd(abs(player.vy))-1
-   s.r = flr(rnd(2)+2)
-   add(splashes,s)
+    local s = {}
+    s.x = player.x + 10*sgn(-player.vx) + rnd(6)-3
+    s.y = player.y + rnd(6)-3
+    s.vx = rnd(2)*sgn(-player.vx)
+    s.vy = -rnd(abs(player.vy))-1
+    s.r = flr(rnd(2)+2)
+    add(splashes,s)
+    
+    local b = {}
+    b.x = player.x + 10*sgn(player.vx) + rnd(6)-3
+    b.y = pwave + rnd(3)+10
+    b.vx = rnd(2)*sgn(-player.vx)
+    b.vy = rnd(abs(player.vy))+10
+    b.r = flr(rnd(2)+2)
+    add(bubbles,b)
    end
   end
    player.vy -= (player.y-pwave)*0.9
@@ -127,6 +181,13 @@ function draw_splashes(s)
  circ(s.x,s.y,s.r)
 end
 
+function draw_bubbles(b)
+ color(2)
+ circfill(b.x,b.y,b.r)
+ color(1)
+ circfill(b.x,b.y,b.r-1)
+end
+
 function _draw()
  camera(0,0)
  color(2)
@@ -137,6 +198,7 @@ function _draw()
  draw_boat()
  draw_waves()
  foreach(splashes, draw_splashes)
+ foreach(bubbles, draw_bubbles)
  
  --[[color(2)
  for x = cam.x,cam.x+128 do
@@ -201,13 +263,19 @@ function draw_waves()
  for x = cam.x,cam.x+128 do
   local w1 = wave(x)
   local w2 = wave(x+1)
-  rectfill(x,-1+w1,x,2+w2)
+  rectfill(x,-1+w1,x,5+w2)
  end
  color(1)
  for x = cam.x,cam.x+128 do
   local w1 = wave(x)
   local w2 = wave(x+1)
   line(x,w1,x,w2)
+ end
+ rectfill(cam.x,10,cam.x+128,128)
+ for x = cam.x,cam.x+128 do
+  local w1 = wave(x)
+  local w2 = wave(x+1)
+  rect(x,3+w1,x,10+w2)
  end
 end
 
