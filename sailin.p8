@@ -52,15 +52,6 @@ function _init()
   poke(0x3200+66, 0)--start
   poke(0x3200+67, 0)--end]]
   
-  --jump
-  --[[for i=0,5 do
-   poke(0x3200+i,(i+3)*(i-2)+4)
-  end
-  --poke(0x3200+65, 0)--edit mode
-  poke(0x3200+65, 0x08)--speed
-  poke(0x3200+66, 0)--start
-  poke(0x3200+67, 0)--end]]
-  
   --music1
   for i=0,64 do
    poke(0x3200+i,sin(i/16)*4+11)
@@ -81,21 +72,54 @@ function _init()
   
   --music3
   for i=0,64 do
-   poke(0x3200+i+136,sin(i/16)*2-87 - i/15)
+   local t = sin(i/16)*2-87 - i/15
+   poke(0x3200+i+136,bxor(t,128))
   end
   --poke(0x3200+65+68, 0)--edit mode
   poke(0x3200+65+136, 0x32)--speed
   poke(0x3200+66+136, 0)--start
   poke(0x3200+67+136, 0)--end
   
+  --music4
+  for i=0,64 do
+   local t = i%8*50+38 + i/16
+   poke(0x3200+i+204,t)
+  end
+  --poke(0x3200+65+68, 0)--edit mode
+  poke(0x3200+65+204, 0x32)--speed
+  poke(0x3200+66+204, 0)--start
+  poke(0x3200+67+204, 0)--end
+  
+  --music5
+  for i=0,64 do
+   local t = i%8*50+42 + i/16
+   poke(0x3200+i+272,t)
+  end
+  --poke(0x3200+65+68, 0)--edit mode
+  poke(0x3200+65+272, 0x32)--speed
+  poke(0x3200+66+272, 0)--start
+  poke(0x3200+67+272, 0)--end
+  
+  --jump
+  for i=0,5 do
+   poke(0x3200+i+340,(i+3)*(i-2)+4)
+  end
+  --poke(0x3200+65+340, 0)--edit mode
+  poke(0x3200+65+340, 0x08)--speed
+  poke(0x3200+66+340, 0)--start
+  poke(0x3200+67+340, 0)--end
   
   -- song
-  poke(0x3100+0,0+128)
-  poke(0x3100+4,0)
-  poke(0x3100+5,1)
-  poke(0x3100+8,0)
-  poke(0x3100+9,2+128)
-  music(0)
+  for i=0,12 do
+   poke(0x3100+i*4,max(0,i%3-2))
+   poke(0x3100+i*4+1,i%4+1)
+   poke(0x3100+i*4+2,i%2*5)
+  end
+  -- song loop
+  poke(0x3100+0,0+128)
+  poke(0x3100+12*4+1,peek(0x3100+4*4+1)+128)
+  
+  music(0,1000,1+2+3)
   
   --rumble
   --[[for i=0,64 do
@@ -295,7 +319,10 @@ function _update()
  
  -- jump
  if not player.air then
-  if btnp(2) then player.vy = -10 end
+  if btnp(2) then
+   sfx(5,3)
+   player.vy = -10
+  end
  end
  
  -- angle
@@ -375,9 +402,6 @@ function _update()
  cam.x = lerp(cam.x, player.x-42, 0.2)
  cam.y = lerp(cam.y, player.y-64, 0.2)
  
- if btnp(5) then
-  sfx(0,0)
-  end
 end
 
 function draw_splashes(s)
@@ -439,14 +463,6 @@ end
 
 function draw_debug()
  color(0)
- --print(#wraps)
- 
- local v = peek(0x3100)
- print(v,1,1)
- for x=0,0xff do
- v = peek(0x3200+x)
- print(v,flr(x/20)*30,6*(x%20+1))
- end
 end
 
 function draw_boat()
