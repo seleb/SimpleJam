@@ -12,6 +12,8 @@ grav = 1
 
 wave_offset=0
 wave_speed=-1
+wave_amp = 0.1
+wave_turb= 1
 
 function lerp(a,b,t)
  return a+(b-a)*t
@@ -275,7 +277,7 @@ function wrap()
  end
 end
 
-function _update()
+function _update() 
  wrap()
  
  if flr(rnd(20))==1 then
@@ -539,6 +541,8 @@ function draw_boat()
 end
 
 function draw_waves()
+ color(1)
+ rectfill(cam.x,10,cam.x+128,128)
  color(2)
  for x = cam.x,cam.x+128 do
   local w1 = wave(x)
@@ -551,7 +555,6 @@ function draw_waves()
   local w2 = wave(x+1)
   line(x,w1,x,w2)
  end
- rectfill(cam.x,10,cam.x+128,128)
  for x = cam.x,cam.x+128 do
   local w1 = wave(x)
   local w2 = wave(x+1)
@@ -570,7 +573,7 @@ function wave(x)
  local t = 64 --period
  local a = 8 --amplitude
  local w1 = (x-wave_offset)/(t*2)
- w1 = abs(sin(w1))
+ w1 = abs(sin(w1))+cos(time()/2-x/t*wave_turb)*wave_amp
  return flr(w1*a)
 end
 
