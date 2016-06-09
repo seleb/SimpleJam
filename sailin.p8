@@ -179,6 +179,9 @@ function _update()
   player.air = true
  end
  
+ player.oldx = player.x
+ player.oldy = player.y
+ 
  player.x += player.vx
  player.y += player.vy
  player.a += player.va
@@ -209,6 +212,9 @@ function _draw()
  camera(cam.x, cam.y)
  
  draw_boat()
+ 
+ 
+ 
  foreach(splashes, draw_splashes)
  draw_waves()
  foreach(bubbles, draw_bubbles)
@@ -245,13 +251,18 @@ function draw_boat()
  
  -- sail
  local sail = {}
- sail.x1 = lerp(mast.x,aft.x,0.6)
- sail.y1 = lerp(mast.y,aft.y,0.6)
+ sail.x1 = lerp(mast.x,aft.x,0.6)-player.vx+sin(time()*0.2)
+ sail.y1 = lerp(mast.y,aft.y,0.6)-player.vy+cos(time()*0.5)
  sail.x2 = lerp(player.x,mast.x,0.3)
  sail.y2 = lerp(player.y,mast.y,0.3)
+ 
+ 
  line(mast.x,mast.y,sail.x1,sail.y1)
  line(sail.x1,sail.y1,sail.x2,sail.y2)
-  
+ line(sail.x1,sail.y1,player.x,player.y)
+ 
+ line(lerp(player.x,prow.x,0.25),lerp(player.y,prow.y,0.25),player.oldx,player.oldy+h/2)
+ circfill(player.oldx,player.oldy+h/2, 2) 
  for a=0.35,0.75,0.1 do
   local ca1 = h*cos(a-0.1)
   local sa1 = w*sin(a-0.1)
