@@ -455,10 +455,10 @@ function draw_bg()
 end
 
 function draw_menu()
- print_ol("soda pop sailing", -16, -37, true)
- print_ol("\139",-16,-30,not btn(0))
- print_ol("\145",0, -30,not btn(1))
- print_ol("\148",-8,-30,not btn(2))
+ print_ol("soda-pop sailin'", -16, -45, true)
+ print_ol("\139",-16,-35,not btn(0))
+ print_ol("\145",0, -35,not btn(1))
+ print_ol("\148",-8,-35,not btn(2))
 end
 
 function _draw()
