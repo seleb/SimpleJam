@@ -4,6 +4,7 @@ __lua__
 cam = {}
 player = {}
 bubbles ={}
+clouds = {}
 splashes = {}
 grav = 1
 
@@ -105,6 +106,22 @@ function update_bubbles(b)
  end
 end
 
+function update_clouds(c)
+ if c.kill then
+  del(clouds,c)
+  return
+ end
+ 
+ c.x += c.vx
+ 
+ if abs(c.x-cam.x) > 256+c.r
+ or abs(c.y-cam.y) > 256+c.r
+ then
+  c.kill = true
+  return
+ end
+end
+
 function _update()
  wave_offset += wave_speed
 
@@ -116,10 +133,20 @@ function _update()
   b.vy = 0
   b.r = flr(rnd(2)+1)
   add(bubbles,b)
+ end
+ 
+ if #clouds < 64 then
+  local c = {}
+  c.vx = (rnd(abs(wave_speed/3))+0.1)*sgn(wave_speed)
+  c.r = flr(rnd(20))+10
+  c.x = cam.x+(128+rnd(128)+c.r)*sgn(player.vx)
+  c.y = min(wave(cam.x)-c.r-rnd(128),cam.y+rnd(256)-128)
+  add(clouds,c)
  end
  
  foreach(splashes, update_splashes)
  foreach(bubbles, update_bubbles)
+ foreach(clouds, update_clouds)
 
  --move
  local speed = 0.5
@@ -158,7 +185,7 @@ function _update()
    for i = 0,abs(player.vy),3 do
     local s = {}
     s.x = player.x + 10*sgn(-player.vx) + rnd(6)-3
-    s.y = player.y + rnd(6)-3
+    s.y = player.y + rnd(6)-1
     s.vx = rnd(2)*sgn(-player.vx)
     s.vy = -rnd(abs(player.vy))-1
     s.r = flr(rnd(2))
@@ -177,6 +204,27 @@ function _update()
    player.vy *= 0.8
  else
   player.air = true
+ end
+ 
+ if not player.air and abs(player.vx) > 0.1 then
+  if rnd() > 0.5 then
+  local s = {}
+    s.x = player.x + 10*sgn(-player.vx) + rnd(6)-3
+    s.y = player.y + rnd(6)-1
+    s.vx = rnd(2)*sgn(-player.vx)
+    s.vy = -rnd(abs(player.vy))-1
+    s.r = flr(rnd(2))
+    add(splashes,s)
+  end
+  if rnd() > 0.5 then
+   local b = {}
+   b.x = player.x + 10*sgn(player.vx) + rnd(6)-3
+   b.y = pwave + rnd(3)+10
+   b.vx = rnd(2)*sgn(-player.vx)
+   b.vy = rnd(abs(player.vy))+10
+   b.r = flr(rnd(2))
+   add(bubbles,b)
+  end
  end
  
  player.oldx = player.x
@@ -218,7 +266,9 @@ function _draw()
  foreach(splashes, draw_splashes)
  draw_waves()
  foreach(bubbles, draw_bubbles)
- 
+ foreach(clouds, draw_clouds)
+ color(0)
+ print("clouds:"..#clouds,0,0)
  --[[color(2)
  for x = cam.x,cam.x+128 do
   line(x,11+wave(x),x,12+wave(x+1))
@@ -301,6 +351,13 @@ function draw_waves()
   local w2 = wave(x+1)
   rect(x,3+w1,x,10+w2)
  end
+end
+
+function draw_clouds(c)
+ color(1)
+ circ(c.x,c.y,c.r)
+ color(2)
+ circfill(c.x,c.y-1,c.r)
 end
 
 function wave(x)
