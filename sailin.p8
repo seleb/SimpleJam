@@ -7,6 +7,9 @@ bubbles ={}
 splashes = {}
 grav = 1
 
+wave_offset=0
+wave_speed=-1
+
 function lerp(a,b,t)
  return a+(b-a)*t
 end
@@ -26,17 +29,15 @@ end
 
 function update_splashes(s)
  if s.kill then
-  if s.r > 1 then
-   for i=0,rnd(s.r) do
-    local s2 = {}
-    s2.x = s.x
-    s2.y = s.y
-    s2.vx = rnd(2)*sgn(-s.vx)
-    s2.vy = -rnd(s.vy)-1
-    s2.r = rnd(s.r)
-    add(splashes,s2)
+  if s.r >= 1 then
+   local s2 = {}
+   s2.x = s.x
+   s2.y = s.y-2
+   s2.vx = rnd(2)*sgn(-s.vx)
+   s2.vy = -rnd(s.vy)-2
+   s2.r = 0.5
+   add(splashes,s2)
    end
-  end
   del(splashes,s)
   return
  end
@@ -51,8 +52,8 @@ function update_splashes(s)
   return
  end
  
- if abs(s.x-cam.x) > 128+s.r
- or abs(s.y-cam.y) > 128+s.r
+ if abs(s.x-cam.x) > 256+s.r
+ or abs(s.y-cam.y) > 256+s.r
  then
   s.kill = true
   s.r = 0
@@ -65,8 +66,8 @@ function update_bubbles(b)
   if b.r > 1 then
    for i=0,rnd(b.r) do
     local b2 = {}
-    b2.x = b.x
-    b2.y = b.y
+    b2.x = b.x+rnd(4)-2
+    b2.y = b.y+rnd(4)-2
     b2.vx = rnd(2)*sgn(-b.vx)
     b2.vy = rnd(10)+1
     b2.r = rnd(b.r)
@@ -77,6 +78,7 @@ function update_bubbles(b)
   return
  end
  b.vy -= grav
+ b.vx += wave_speed
  
  b.vx *= 0.5
  b.vy *= 0.5
@@ -89,8 +91,8 @@ function update_bubbles(b)
   return
  end
  
- if abs(b.x-cam.x) > 128+b.r
- or abs(b.y-cam.y) > 128+b.r
+ if abs(b.x-cam.x) > 256+b.r
+ or abs(b.y-cam.y) > 256+b.r
  then
   b.kill = true
   b.r = 0
@@ -99,11 +101,23 @@ function update_bubbles(b)
  
  if flr(rnd(100)) == 1 then
   b.kill = true
-  b.r += 2
+  b.r += 1
  end
 end
 
 function _update()
+ wave_offset += wave_speed
+
+ if flr(rnd(20))==1 then
+  local b = {}
+  b.x = cam.x+rnd(256)
+  b.y = cam.y+128
+  b.vx = rnd(10)-5
+  b.vy = 0
+  b.r = flr(rnd(2)+1)
+  add(bubbles,b)
+ end
+ 
  foreach(splashes, update_splashes)
  foreach(bubbles, update_bubbles)
 
@@ -147,7 +161,7 @@ function _update()
     s.y = player.y + rnd(6)-3
     s.vx = rnd(2)*sgn(-player.vx)
     s.vy = -rnd(abs(player.vy))-1
-    s.r = flr(rnd(2)+2)
+    s.r = flr(rnd(2))
     add(splashes,s)
     
     local b = {}
@@ -155,7 +169,7 @@ function _update()
     b.y = pwave + rnd(3)+10
     b.vx = rnd(2)*sgn(-player.vx)
     b.vy = rnd(abs(player.vy))+10
-    b.r = flr(rnd(2)+2)
+    b.r = flr(rnd(2))
     add(bubbles,b)
    end
   end
@@ -168,7 +182,6 @@ function _update()
  player.x += player.vx
  player.y += player.vy
  player.a += player.va
- 
  
  cam.x = lerp(cam.x, player.x-64, 0.25)
  cam.y = lerp(cam.y, player.y-64, 0.25)
@@ -196,8 +209,8 @@ function _draw()
  camera(cam.x, cam.y)
  
  draw_boat()
- draw_waves()
  foreach(splashes, draw_splashes)
+ draw_waves()
  foreach(bubbles, draw_bubbles)
  
  --[[color(2)
@@ -282,7 +295,7 @@ end
 function wave(x)
  local t = 64 --period
  local a = 8 --amplitude
- local w1 = (x+time()*30)/(t*2)
+ local w1 = (x-wave_offset)/(t*2)
  w1 = abs(sin(w1))
  return flr(w1*a)
 end
