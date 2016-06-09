@@ -337,7 +337,8 @@ function _update()
  
  local pwave = wave(player.x)-8
  if player.y > pwave then
-  if player.air then
+  if player.air then
+   sfx(5,3)
    player.air = false
    for i = 0,abs(player.vy),3 do
     local s = particle(
