@@ -7,6 +7,7 @@ bubbles ={}
 clouds = {}
 splashes = {}
 wraps = {}
+wrap_offset = 0
 grav = 1
 
 wave_offset=0
@@ -259,12 +260,14 @@ function wrap()
 
  local r = 1000
  if player.x > r then
+  wrap_offset += 1
   wave_offset -= r
   for w in all(wraps) do
    w.x -= r
   end
  end
  if player.x < -r then
+  wrap_offset-= 1
   wave_offset += r
   for w in all(wraps) do
    w.x += r
@@ -447,7 +450,13 @@ function draw_bg()
  pset(-26,-24+offset-256,1)
  color(2)
  circfill(4,-1+offset-256,8)
- 
+end
+
+function draw_menu()
+ print_ol("soda pop sailing", -16, -37, true)
+ print_ol("\139",-16,-30,not btn(0))
+ print_ol("\145",0, -30,not btn(1))
+ print_ol("\148",-8,-30,not btn(2))
 end
 
 function _draw()
@@ -455,6 +464,12 @@ function _draw()
  -- draw scene
  camera(cam.x, cam.y)
  draw_boat()
+ 
+ 
+ if wrap_offset == 0 then
+  draw_menu()
+ end
+ 
  foreach(splashes, draw_splashes)
  draw_waves()
  foreach(bubbles, draw_bubbles)
@@ -557,6 +572,27 @@ function wave(x)
  local w1 = (x-wave_offset)/(t*2)
  w1 = abs(sin(w1))
  return flr(w1*a)
+end
+
+
+function print_ol(s,x,y,reverse)
+ local c1 = 1
+ local c2 = 2
+ if reverse then
+  c1 = 2
+  c2 = 1
+ end
+ color(c2)
+ print(s,x+1,y+1)
+ print(s,x+1,y)
+ print(s,x+1,y-1)
+ print(s,x,y+1)
+ print(s,x,y-1)
+ print(s,x-1,y+1)
+ print(s,x-1,y)
+ print(s,x-1,y-1)
+ color(c1)
+ print(s,x,y)
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
