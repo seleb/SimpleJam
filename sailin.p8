@@ -6,6 +6,7 @@ player = {}
 bubbles ={}
 clouds = {}
 splashes = {}
+wraps = {}
 grav = 1
 
 wave_offset=0
@@ -23,23 +24,38 @@ function _init()
  player.vy = 0
  player.va = 0
  player.air = true
+ add(wraps,player)
  
  cam.x = player.x
  cam.y = player.y
+ add(wraps,cam)
+end
+
+function particle(x,y,vx,vy,r)
+ local p = {}
+ p.x = x
+ p.y = y
+ p.vx = vx
+ p.vy = vy
+ p.r = r
+ add(wraps,p)
+ return p
 end
 
 function update_splashes(s)
  if s.kill then
   if s.r >= 1 then
-   local s2 = {}
-   s2.x = s.x
-   s2.y = s.y-2
-   s2.vx = rnd(2)*sgn(-s.vx)
-   s2.vy = -rnd(s.vy)-2
-   s2.r = 0.5
+   local s2 = particle(
+   s.x,
+   s.y-2,
+   rnd(2)*sgn(-s.vx),
+   -rnd(s.vy)-2,
+   0.5
+   )
    add(splashes,s2)
-   end
+   end
   del(splashes,s)
+  del(wraps,s)
   return
  end
  s.vy += grav
@@ -66,16 +82,18 @@ function update_bubbles(b)
  if b.kill then
   if b.r > 1 then
    for i=0,rnd(b.r) do
-    local b2 = {}
-    b2.x = b.x+rnd(4)-2
-    b2.y = b.y+rnd(4)-2
-    b2.vx = rnd(2)*sgn(-b.vx)
-    b2.vy = rnd(10)+1
-    b2.r = rnd(b.r)
+    local b2 = particle(
+    b.x+rnd(4)-2,
+    b.y+rnd(4)-2,
+    rnd(2)*sgn(-b.vx),
+    rnd(10)+1,
+    rnd(b.r)
+    )
     add(bubbles,b2)
    end
   end
   del(bubbles,b)
+  del(wraps,b)
   return
  end
  b.vy -= grav
@@ -109,6 +127,7 @@ end
 function update_clouds(c)
  if c.kill then
   del(clouds,c)
+  del(wraps,c)
   return
  end
  
@@ -122,25 +141,49 @@ function update_clouds(c)
  end
 end
 
-function _update()
+function wrap()
  wave_offset += wave_speed
+ if wave_offset < -64 then wave_offset += 64 end
+if wave_offset > 64 then wave_offset -= 64 end
 
+ local r = 1000
+ if player.x > r then
+  wave_offset -= r
+  for w in all(wraps) do
+   w.x -= r
+  end
+ end
+ if player.x < -r then
+  wave_offset += r
+  for w in all(wraps) do
+   w.x += r
+  end
+ end
+end
+
+function _update()
+ wrap()
+ 
  if flr(rnd(20))==1 then
-  local b = {}
-  b.x = cam.x+rnd(256)
-  b.y = cam.y+128
-  b.vx = rnd(10)-5
-  b.vy = 0
-  b.r = flr(rnd(2)+1)
+  local b = particle(
+  cam.x+rnd(256),
+  cam.y+128,
+  rnd(10)-5,
+  0,
+  flr(rnd(2)+1)
+  )
   add(bubbles,b)
  end
  
  if #clouds < sin(time()/50)*64 then
-  local c = {}
-  c.vx = (rnd(abs(wave_speed/3))+0.1)*sgn(wave_speed)
-  c.r = flr(rnd(20))+10
-  c.x = cam.x+(128+rnd(128)+c.r)*sgn(player.vx)
-  c.y = flr(wave(cam.x)-c.r-32-rnd(128))
+  local r = flr(rnd(20))+10
+  local c = particle(
+  cam.x+(128+rnd(128)+r)*sgn(player.vx),
+  flr(wave(cam.x)-r-32-rnd(128)),
+  (rnd(abs(wave_speed/3))+0.1)*sgn(wave_speed),
+  0,
+  r
+  )
   add(clouds,c)
  end
  
@@ -183,20 +226,22 @@ function _update()
   if player.air then
    player.air = false
    for i = 0,abs(player.vy),3 do
-    local s = {}
-    s.x = player.x + 10*sgn(-player.vx) + rnd(6)-3
-    s.y = player.y + rnd(6)-1
-    s.vx = rnd(2)*sgn(-player.vx)
-    s.vy = -rnd(abs(player.vy))-1
-    s.r = flr(rnd(2))
+    local s = particle(
+    player.x + 10*sgn(-player.vx) + rnd(6)-3,
+    player.y + rnd(6)-1,
+    rnd(2)*sgn(-player.vx),
+    -rnd(abs(player.vy))-1,
+    flr(rnd(2))
+    )
     add(splashes,s)
     
-    local b = {}
-    b.x = player.x + 10*sgn(player.vx) + rnd(6)-3
-    b.y = pwave + rnd(3)+10
-    b.vx = rnd(2)*sgn(-player.vx)
-    b.vy = rnd(abs(player.vy))+10
-    b.r = flr(rnd(2))
+    local b = particle(
+    player.x + 10*sgn(player.vx) + rnd(6)-3,
+    pwave + rnd(3)+10,
+    rnd(2)*sgn(-player.vx),
+    rnd(abs(player.vy))+10,
+    flr(rnd(2))
+    )
     add(bubbles,b)
    end
   end
@@ -208,21 +253,23 @@ function _update()
  
  if not player.air and abs(player.vx) > 0.1 then
   if rnd() > 0.5 then
-  local s = {}
-    s.x = player.x + 10*sgn(-player.vx) + rnd(6)-3
-    s.y = player.y + rnd(6)-1
-    s.vx = rnd(2)*sgn(-player.vx)
-    s.vy = -rnd(abs(player.vy))-1
-    s.r = flr(rnd(2))
-    add(splashes,s)
+   local s = particle(
+   player.x + 10*sgn(-player.vx) + rnd(6)-3,
+   player.y + rnd(6)-1,
+   rnd(2)*sgn(-player.vx),
+   -rnd(abs(player.vy))-1,
+   flr(rnd(2))
+   )
+   add(splashes,s)
   end
   if rnd() > 0.5 then
-   local b = {}
-   b.x = player.x + 10*sgn(player.vx) + rnd(6)-3
-   b.y = pwave + rnd(3)+10
-   b.vx = rnd(2)*sgn(-player.vx)
-   b.vy = rnd(abs(player.vy))+10
-   b.r = flr(rnd(2))
+   local b = particle(
+   player.x + 10*sgn(player.vx) + rnd(6)-3,
+   pwave + rnd(3)+10,
+   rnd(2)*sgn(-player.vx),
+   rnd(abs(player.vy))+10,
+   flr(rnd(2))
+   )
    add(bubbles,b)
   end
  end
@@ -264,6 +311,10 @@ function _draw()
  draw_waves()
  foreach(bubbles, draw_bubbles)
  foreach(clouds, draw_clouds)
+ 
+ camera(0,0)
+ color(0)
+ print(#wraps)
 end
 
 function draw_boat()
