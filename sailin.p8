@@ -284,7 +284,7 @@ function _update()
   flr(rnd(2)+1)
   )
   add(bubbles,b)
- end
+ end
  
  if #clouds < sin(time()/50)*64 then
   local r = flr(rnd(20))+10
@@ -320,7 +320,9 @@ function _update()
  -- jump
  if not player.air then
   if btnp(2) then
-   sfx(5,3)
+   sfx(5,3)
+   cam.y += 5
+   cam.x += 5
    player.vy = -10
   end
  end
@@ -339,6 +341,7 @@ function _update()
  if player.y > pwave then
   if player.air then
    sfx(5,3)
+   cam.y -= 2
    player.air = false
    for i = 0,abs(player.vy),3 do
     local s = particle(
