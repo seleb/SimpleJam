@@ -135,12 +135,12 @@ function _update()
   add(bubbles,b)
  end
  
- if #clouds < 64 then
+ if #clouds < sin(time()/50)*64 then
   local c = {}
   c.vx = (rnd(abs(wave_speed/3))+0.1)*sgn(wave_speed)
   c.r = flr(rnd(20))+10
   c.x = cam.x+(128+rnd(128)+c.r)*sgn(player.vx)
-  c.y = min(wave(cam.x)-c.r-rnd(128),cam.y+rnd(256)-128)
+  c.y = flr(wave(cam.x)-c.r-32-rnd(128))
   add(clouds,c)
  end
  
@@ -253,26 +253,17 @@ function draw_bubbles(b)
 end
 
 function _draw()
+ -- clear
  camera(0,0)
  color(2)
  rectfill(0,0,128,128)
- 
+ -- draw scene
  camera(cam.x, cam.y)
- 
  draw_boat()
- 
- 
- 
  foreach(splashes, draw_splashes)
  draw_waves()
  foreach(bubbles, draw_bubbles)
  foreach(clouds, draw_clouds)
- color(0)
- print("clouds:"..#clouds,0,0)
- --[[color(2)
- for x = cam.x,cam.x+128 do
-  line(x,11+wave(x),x,12+wave(x+1))
- end]]
 end
 
 function draw_boat()
