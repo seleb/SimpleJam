@@ -23,6 +23,8 @@ wave_turb= 1
 win = false
 win_time = -1
 
+ui_visible = true
+
 function lerp(a,b,t)
  return a+(b-a)*t
 end
@@ -322,6 +324,9 @@ end
 
 function _update()
  
+ -- ui stuff
+ if btnp(4) then ui_visible = not ui_visible end
+ 
  if win then
   return
  end
@@ -565,11 +570,13 @@ function draw_bg()
 end
 
 function draw_menu()
- print_ol("soda-pop sailin'", -16, -45, true)
- print_ol("\139",-16,-35,not btn(0))
- print_ol("\145",0, -35,not btn(1))
- print_ol("\148",-8,-35,not btn(2))
- print_ol("\137->\138",-16,-25,true)
+ if ui_visible then
+  print_ol("soda-pop sailin'", -16, -45, true)
+  print_ol("\139",-16,-35,not btn(0))
+  print_ol("\145",0, -35,not btn(1))
+  print_ol("\148",-8,-35,not btn(2))
+  print_ol("\137->\138",-16,-25,true)
+ end
 end
 
 function draw_isle()
@@ -682,39 +689,40 @@ function _draw()
 end
 
 function draw_ui()
- for x=0,num_needed-1 do
-  print_ol("\137",1+x*6,128-7,x<num_saved)
- end
+ if ui_visible then
+  for x=0,num_needed-1 do
+   print_ol("\137",1+x*6,128-7,x<num_saved)
+  end
  
- local d = 0.5
- if num_saved < num_needed then
-  if peeps[1].towing then
-   d = 0.25
-  else
-   if player.x > peeps[1].x then
+  local d = 0.5
+  if num_saved < num_needed then
+   if peeps[1].towing then
     d = 0.25
    else
-    d = -0.25
+    if player.x > peeps[1].x then
+     d = 0.25
+    else
+     d = -0.25
+    end
    end
   end
- end
  
- local x1 = 2*sin(d)
- local y1 = 2*cos(d)
- local x2 = 5
- local y2 = 115
- color(2)
- for x=-1,1 do
- for y=-1,1 do
- line(x+x2-x1,y+y2-y1,x+x2+x1,y+y2+y1)
- end
- end
- circfill(x2+x1,y2+y1,2)
+  local x1 = 2*sin(d)
+  local y1 = 2*cos(d)
+  local x2 = 5
+  local y2 = 115
+  color(2)
+  for x=-1,1 do
+  for y=-1,1 do
+  line(x+x2-x1,y+y2-y1,x+x2+x1,y+y2+y1)
+  end
+  end
+  circfill(x2+x1,y2+y1,2) 
 
- color(1)
- line(x2-x1,y2-y1,x2+x1,y2+y1)
- circfill(x2+x1,y2+y1,1)
-
+  color(1)
+  line(x2-x1,y2-y1,x2+x1,y2+y1)
+  circfill(x2+x1,y2+y1,1)
+ end
 end
 
 function draw_debug()
