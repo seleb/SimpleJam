@@ -12,6 +12,8 @@ isle = {}
 wrap_offset = 0
 menu_visible = true
 grav = 1
+num_saved = 0
+num_needed=2
 
 wave_offset=0
 wave_speed=-1
@@ -269,6 +271,17 @@ function update_peeps(p)
    if abs(d.x) < 5 then
     del(peeps,p)
     del(wraps,p)
+    num_saved += 1
+    for i=0,10 do
+     local s = particle(
+     isle.x + rnd(10) - 5,
+     isle.y + rnd(10) - 5,
+     rnd(10)-5,
+     -rnd(10)-5,
+     rnd(4)
+     )
+     add(splashes,s)
+    end
    end
   end
  else
@@ -341,10 +354,9 @@ function _update()
  foreach(peeps, update_peeps)
  
  -- people to rescue
- if #peeps < 1 then
+ if #peeps < 1 and num_saved < num_needed then
   local p = {}
-  p.x = rnd(128)+64
-  if rnd() > 0.5 then p.x *= -1 end
+  p.x = rnd(32*num_saved)+80
   p.x += isle.x
   p.towing = false
   add(peeps,p)
@@ -451,7 +463,7 @@ function _update()
  player.a += player.va
  
  cam.x = lerp(cam.x, player.x-42, 0.2)
- cam.y = lerp(cam.y, player.y-64, 0.2)
+ cam.y = lerp(cam.y, player.y-88, 0.2)
  
 end
 
@@ -504,6 +516,7 @@ function draw_menu()
 end
 
 function draw_isle()
+ --body
  color(1)
  circfill(isle.x+5,isle.y+8,21)
 	color(2)
@@ -520,7 +533,21 @@ function draw_isle()
  circfill(isle.x+19,isle.y+6,10)
  
  color(1)
+ --house
  print("\138",isle.x-18,isle.y-16)
+ 
+ --bridge
+ line(isle.x-1,isle.y-2,isle.x+11,isle.y-2)
+ --front
+ rect(isle.x-20,isle.y+2,isle.x-30,isle.y+4)
+ rect(isle.x-20,isle.y,isle.x-30,isle.y-2)
+ 
+ --flagpole
+ line(isle.x+6,isle.y-13,isle.x+6,isle.y-30)
+ --flag
+ for x =1,8 do
+  line(isle.x+6+x,isle.y-25+sin(x/8+time()),isle.x+6+x,isle.y-30+sin(x/8+time()))
+ end
 end
 
 function draw_peeps(p)
@@ -551,7 +578,41 @@ function _draw()
  
  camera(0,0)
  
+ draw_ui()
+ 
  draw_debug()
+end
+
+function draw_ui()
+ for x=0,num_needed-1 do
+  print_ol("\137",1+x*6,128-7,x<num_saved)
+ end
+ 
+ local d = 0.5
+ if num_saved < num_needed then
+  if peeps[1].towing then
+   d = 0.25
+  else
+   d = -0.25
+  end
+ end
+ 
+ local x1 = 2*sin(d)
+ local y1 = 2*cos(d)
+ local x2 = 5
+ local y2 = 115
+ color(2)
+ for x=-1,1 do
+ for y=-1,1 do
+ line(x+x2-x1,y+y2-y1,x+x2+x1,y+y2+y1)
+ end
+ end
+ circfill(x2+x1,y2+y1,2)
+
+ color(1)
+ line(x2-x1,y2-y1,x2+x1,y2+y1)
+ circfill(x2+x1,y2+y1,1)
+
 end
 
 function draw_debug()
