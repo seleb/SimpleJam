@@ -13,12 +13,15 @@ wrap_offset = 0
 menu_visible = true
 grav = 1
 num_saved = 0
-num_needed=2
+num_needed= 0
 
 wave_offset=0
 wave_speed=-1
 wave_amp = 0.1
 wave_turb= 1
+
+win = false
+win_time = -1
 
 function lerp(a,b,t)
  return a+(b-a)*t
@@ -40,6 +43,8 @@ function _init()
  
  isle.x = 48
  isle.y = 0
+ isle.vx = 0
+ isle.vy = 0
  add(wraps,isle)
  -- sfx
  -- memory locations fromhttps://gist.github.com/paniq/7814560e2b560b76911b
@@ -316,7 +321,12 @@ function wrap()
 end
 
 function _update()
- isle.y = wave(isle.x)/3
+ 
+ if win then
+  return
+ end
+
+
  wrap()
  
  if menu_visible and cam.x > 50 or cam.x < -150 then
@@ -361,30 +371,59 @@ function _update()
   p.towing = false
   add(peeps,p)
   add(wraps,p)
- end 
+ end
+ 
+ --takeoff
+ if num_saved >= num_needed then
+  local b = particle(
+  isle.x+rnd(60)-30,
+  isle.y+15+rnd(10),
+  rnd(4)-2,
+  rnd(20)+5,
+  flr(rnd(3)+1)
+  )
+  add(bubbles,b)
+ end
 
  --move
  local speed = 0.5
  if btn(0) then
-  player.vx -= speed*sin(player.a)
-  if not player.air then
-   player.vy -= speed*cos(player.a)
+  if num_saved < num_needed then
+   player.vx -= speed*sin(player.a)
+   if not player.air then
+    player.vy -= speed*cos(player.a)
+   end
+  else
+   isle.vx -= speed
   end
  end
  if btn(1) then
-  player.vx += speed*sin(player.a)
-  if not player.air then
-   player.vy += speed*cos(player.a)
+  if num_saved < num_needed then
+   player.vx += speed*sin(player.a)
+   if not player.air then
+    player.vy += speed*cos(player.a)
+   end
+  else
+   isle.vx += speed
   end
  end
  
  -- jump
- if not player.air then
-  if btnp(2) then
-   sfx(5,3)
-   cam.y += 5
-   cam.x += 5
-   player.vy = -10
+ if num_saved < num_needed then
+  if not player.air then
+   if btnp(2) then
+    sfx(5,3)
+    cam.y += 5
+    cam.x += 5
+    player.vy = -10
+   end
+  end
+ else
+  isle.vy += grav
+  if btn(2) then
+   isle.vy -= grav*1.1
+   cam.x += mid(-2,(rnd(isle.y)-isle.y/2)/10,2)
+   cam.y += mid(-2,(rnd(isle.y)-isle.y/2)/10,2)
   end
  end
  
@@ -462,9 +501,26 @@ function _update()
  player.y += player.vy
  player.a += player.va
  
- cam.x = lerp(cam.x, player.x-42, 0.2)
- cam.y = lerp(cam.y, player.y-88, 0.2)
  
+ 
+ if num_saved < num_needed then
+  cam.x = lerp(cam.x, player.x-42, 0.2)
+  cam.y = lerp(cam.y, player.y-88, 0.2)
+ else
+  isle.vx *= 0.5
+  isle.vy *= 0.9
+  isle.x += isle.vx
+  isle.y += isle.vy
+  isle.y = min(wave(isle.x),isle.y)
+  cam.x = lerp(cam.x, isle.x-42, 0.1)
+  cam.y = lerp(cam.y, isle.y*0.8-88, 0.1)
+ 
+  --check for win
+  if cam.y < -256-128 then
+   win = true
+   win_time = time()
+  end
+ end
 end
 
 function draw_splashes(s)
@@ -516,6 +572,7 @@ function draw_menu()
 end
 
 function draw_isle()
+ isle.y += wave(isle.x)/3
  --body
  color(1)
  circfill(isle.x+5,isle.y+8,21)
@@ -548,6 +605,14 @@ function draw_isle()
  for x =1,8 do
   line(isle.x+6+x,isle.y-25+sin(x/8+time()),isle.x+6+x,isle.y-30+sin(x/8+time()))
  end
+ isle.y -= wave(isle.x)/3
+ 
+ --boosers
+ rect(isle.x-25,isle.y+11,isle.x+25,isle.y+13)
+ rect(isle.x-20,isle.y+15,isle.x-10,isle.y+17)
+ rect(isle.x-5,isle.y+15,isle.x+5,isle.y+17)
+ rect(isle.x+10,isle.y+15,isle.x+20,isle.y+17)
+ 
 end
 
 function draw_peeps(p)
@@ -581,6 +646,23 @@ function _draw()
  draw_ui()
  
  draw_debug()
+
+ --starfield
+ if num_saved >= num_needed then
+  camera(cam.x,cam.y)
+  color(1)
+  for y=0,4,0.5 do
+   line(cam.x,y*y-256,cam.x+128,y*y-256)
+  end
+  rectfill(cam.x,-256,cam.x+128,min(cam.y,-256))
+  color(2)
+  
+  if win and time() - win_time > 3 then
+   camera(0,0)
+   
+   print_ol("winner",64,64)
+  end
+ end
 end
 
 function draw_ui()
