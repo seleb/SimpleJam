@@ -1,6 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 7
 __lua__
+-- soda-pop sailin'
+-- made by sean for #simplejam
 cam = {}
 player = {}
 bubbles ={}
