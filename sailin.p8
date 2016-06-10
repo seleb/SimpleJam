@@ -13,7 +13,7 @@ wrap_offset = 0
 menu_visible = true
 grav = 1
 num_saved = 0
-num_needed= 0
+num_needed= 10
 
 wave_offset=0
 wave_speed=-1
@@ -438,7 +438,7 @@ function _update()
  player.vy += grav
  
  local pwave = wave(player.x)-8
- if player.y > pwave then
+ if (player.y-pwave) > 1 then
   if player.air then
    sfx(5,3)
    cam.y -= 2
@@ -463,9 +463,9 @@ function _update()
     add(bubbles,b)
    end
   end
-   player.vy -= (player.y-pwave)*0.9
-   player.vy *= 0.8
- else
+   player.vy -= (player.y-pwave)*0.8
+   player.vy *= 0.75
+ elseif (player.y-pwave) < 0 then
   player.air = true
  end
  
@@ -569,6 +569,7 @@ function draw_menu()
  print_ol("\139",-16,-35,not btn(0))
  print_ol("\145",0, -35,not btn(1))
  print_ol("\148",-8,-35,not btn(2))
+ print_ol("\137->\138",-16,-25,true)
 end
 
 function draw_isle()
@@ -660,7 +661,22 @@ function _draw()
   if win and time() - win_time > 3 then
    camera(0,0)
    
-   print_ol("winner",64,64)
+   color(2)
+   circfill(64,256,200)
+   color(1)
+   circfill(64,257,200)
+   srand(17)
+   for x=1,num_needed do
+    print_ol("\137",rnd(100)+15,rnd(50)+64)
+   end
+   for x=1,3 do
+    print_ol("\138",rnd(100)+15,rnd(50)+64)
+   end
+   for x=1,10 do
+    pset(rnd(100)+15,rnd(50),2)
+   end
+   print_ol("\135 \135 \135",64-15,42)
+   
   end
  end
 end
@@ -675,7 +691,11 @@ function draw_ui()
   if peeps[1].towing then
    d = 0.25
   else
-   d = -0.25
+   if player.x > peeps[1].x then
+    d = 0.25
+   else
+    d = -0.25
+   end
   end
  end
  
