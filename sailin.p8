@@ -5,9 +5,12 @@ cam = {}
 player = {}
 bubbles ={}
 clouds = {}
+peeps = {}
 splashes = {}
 wraps = {}
+isle = {}
 wrap_offset = 0
+menu_visible = true
 grav = 1
 
 wave_offset=0
@@ -33,7 +36,9 @@ function _init()
  cam.y = player.y
  add(wraps,cam)
  
- 
+ isle.x = 48
+ isle.y = 0
+ add(wraps,isle)
  -- sfx
  -- memory locations fromhttps://gist.github.com/paniq/7814560e2b560b76911b
   
@@ -255,6 +260,26 @@ function update_clouds(c)
  end
 end
 
+function update_peeps(p)
+ local d = {}
+ if p.towing then
+  p.x = lerp(p.x,player.x,0.1)
+  d.x = isle.x-p.x
+  if wrap_offset == 0 then
+   if abs(d.x) < 5 then
+    del(peeps,p)
+    del(wraps,p)
+   end
+  end
+ else
+  d.x = player.x-p.x
+  d.y = player.y-wave(p.x)
+  if abs(d.x) < 10 and abs(d.y) < 10 then
+   p.towing = true
+  end
+ end
+end
+
 function wrap()
  wave_offset += wave_speed
  if wave_offset < -64 then wave_offset += 64 end
@@ -277,9 +302,15 @@ function wrap()
  end
 end
 
-function _update() 
+function _update()
+ isle.y = wave(isle.x)/3
  wrap()
  
+ if menu_visible and cam.x > 50 or cam.x < -150 then
+  menu_visible = false
+ end
+ 
+ -- carbonation
  if flr(rnd(20))==1 then
   local b = particle(
   cam.x+rnd(256),
@@ -291,6 +322,7 @@ function _update()
   add(bubbles,b)
  end
  
+ -- inclement weather
  if #clouds < sin(time()/50)*64 then
   local r = flr(rnd(20))+10
   local c = particle(
@@ -306,6 +338,18 @@ function _update()
  foreach(splashes, update_splashes)
  foreach(bubbles, update_bubbles)
  foreach(clouds, update_clouds)
+ foreach(peeps, update_peeps)
+ 
+ -- people to rescue
+ if #peeps < 1 then
+  local p = {}
+  p.x = rnd(128)+64
+  if rnd() > 0.5 then p.x *= -1 end
+  p.x += isle.x
+  p.towing = false
+  add(peeps,p)
+  add(wraps,p)
+ end 
 
  --move
  local speed = 0.5
@@ -398,8 +442,6 @@ function _update()
  end
  
  
- 
- 
  -- actually move main stuff
  player.oldx = player.x
  player.oldy = player.y
@@ -461,6 +503,30 @@ function draw_menu()
  print_ol("\148",-8,-35,not btn(2))
 end
 
+function draw_isle()
+ color(1)
+ circfill(isle.x+5,isle.y+8,21)
+	color(2)
+ circfill(isle.x+5,isle.y+9,21)
+ 
+	color(1)
+ circfill(isle.x-15,isle.y+5,16)
+	color(2)
+ circfill(isle.x-15,isle.y+6,16)
+ 
+	color(1)
+ circfill(isle.x+19,isle.y+5,10)
+	color(2)
+ circfill(isle.x+19,isle.y+6,10)
+ 
+ color(1)
+ print("\138",isle.x-18,isle.y-16)
+end
+
+function draw_peeps(p)
+ print_ol("\137",p.x,wave(p.x)-5)
+end
+
 function _draw()
  draw_bg()
  -- draw scene
@@ -468,11 +534,17 @@ function _draw()
  draw_boat()
  
  
- if wrap_offset == 0 then
+ if menu_visible then
   draw_menu()
  end
  
  foreach(splashes, draw_splashes)
+ 
+	draw_isle()
+ 
+ 
+ foreach(peeps, draw_peeps)
+ 
  draw_waves()
  foreach(bubbles, draw_bubbles)
  foreach(clouds, draw_clouds)
@@ -484,6 +556,8 @@ end
 
 function draw_debug()
  color(0)
+ 
+ cursor(1,1)
 end
 
 function draw_boat()
@@ -512,8 +586,14 @@ function draw_boat()
  
  -- sail
  local sail = {}
- sail.x1 = lerp(mast.x,aft.x,0.6)-player.vx+sin(time()*0.2)
- sail.y1 = lerp(mast.y,aft.y,0.6)-player.vy+cos(time()*0.5)
+ local d
+ if player.vx > 0 then
+  d = aft
+ else
+  d = prow
+ end
+ sail.x1 = lerp(mast.x,d.x,min(0.6,abs(player.vx/2)))-player.vx+sin(time()*0.2)
+ sail.y1 = lerp(mast.y,d.y,0.6)-player.vy+cos(time()*0.5)
  sail.x2 = lerp(player.x,mast.x,0.3)
  sail.y2 = lerp(player.y,mast.y,0.3)
  
@@ -522,7 +602,7 @@ function draw_boat()
  line(sail.x1,sail.y1,sail.x2,sail.y2)
  line(sail.x1,sail.y1,player.x,player.y)
  
- line(lerp(player.x,prow.x,0.25),lerp(player.y,prow.y,0.25),player.oldx,player.oldy+h/2)
+ line(lerp(player.x,d.x,-0.25),lerp(player.y,d.y,-0.25),player.oldx,player.oldy+h/2)
  circfill(player.oldx,player.oldy+h/2, 2) 
  for a=0.35,0.75,0.1 do
   local ca1 = h*cos(a-0.1)
