@@ -24,6 +24,18 @@ win = false
 win_time = -1
 
 ui_visible = true
+palettes ={
+{1,2, "soda-pop"},
+{9,10,"sandy"},
+{0,7,"simple single-bit"},
+{12,10,"sunny"},
+{8,14,"shocking salmon"},
+{15,13,"shady"},
+{3,11,"sour spring"},
+{8,12,"sharp sanguine"},
+{5,6,"smoky"}
+}
+palette = 1
 
 function lerp(a,b,t)
  return a+(b-a)*t
@@ -49,26 +61,9 @@ function _init()
  isle.vy = 0
  add(wraps,isle)
  -- sfx
- -- memory locations fromhttps://gist.github.com/paniq/7814560e2b560b76911b
-  
-  --wah
-  --[[for i=0,8 do
-   poke(0x3200+i,bor(i*i,16))
-  end
-  --poke(0x3200+65, 0)--edit mode
-  poke(0x3200+65, 0x08)--speed
-  poke(0x3200+66, 0)--start
-  poke(0x3200+67, 0)--end]]
-  
-  --bubble
-  --[[for i=0,4 do
-   poke(0x3200+i,(i+4)*(i-4))
-  end
-  --poke(0x3200+65, 0)--edit mode
-  poke(0x3200+65, 0x08)--speed
-  poke(0x3200+66, 0)--start
-  poke(0x3200+67, 0)--end]]
-  
+ -- memory locations from
+ -- https://gist.github.com/paniq/7814560e2b560b76911b
+
   --music1
   for i=0,64 do
    poke(0x3200+i,sin(i/16)*4+11)
@@ -76,7 +71,7 @@ function _init()
   --poke(0x3200+65, 0)--edit mode
   poke(0x3200+65, 0x32)--speed
   poke(0x3200+66, 0)--start
-  poke(0x3200+67, 0)--end
+  poke(0x3200+67, 0)--end
   
   --music2
   for i=0,64 do
@@ -105,7 +100,7 @@ function _init()
   --poke(0x3200+65+68, 0)--edit mode
   poke(0x3200+65+204, 0x32)--speed
   poke(0x3200+66+204, 0)--start
-  poke(0x3200+67+204, 0)--end
+  poke(0x3200+67+204, 0)--end
   
   --music5
   for i=0,64 do
@@ -137,26 +132,6 @@ function _init()
   poke(0x3100+12*4+1,peek(0x3100+4*4+1)+128)
   
   music(0,1000,1+2+3)
-  
-  --rumble
-  --[[for i=0,64 do
-   poke(0x3200+i+68,flr(abs(i-32)/32*0x09+3+0x00))
-  end
-  --poke(0x3200+65+68, 0)--edit mode
-  poke(0x3200+65+68, 0x1)--speed
-  poke(0x3200+66+68, 0)--start
-  poke(0x3200+67+68, 0)--end]]
-  
-  --shoot
-  --[[for i=0,32 do
-   poke(0x3200+i+136,flr(abs(i-16)/8*0x09+3+0x00))
-  end
-  --poke(0x3200+65+136, 0)--edit mode
-  poke(0x3200+65+136, 0x01)--speed
-  poke(0x3200+66+136, 0)--start
-  poke(0x3200+67+136, 0)--end]]
-  
-  
 end
 
 function particle(x,y,vx,vy,r)
@@ -172,7 +147,7 @@ end
 
 function update_splashes(s)
  if s.kill then
-  if s.r >= 1 then
+  if s.r >= 1 then
    local s2 = particle(
    s.x,
    s.y-2,
@@ -181,7 +156,7 @@ function update_splashes(s)
    0.5
    )
    add(splashes,s2)
-   end
+   end
   del(splashes,s)
   del(wraps,s)
   return
@@ -200,7 +175,7 @@ function update_splashes(s)
  if abs(s.x-cam.x) > 256+s.r
  or abs(s.y-cam.y) > 256+s.r
  then
-  s.kill = true
+  s.kill = true
   s.r = 0
  end
 end
@@ -211,8 +186,8 @@ function update_bubbles(b)
   if b.r > 1 then
    for i=0,rnd(b.r) do
     local b2 = particle(
-    b.x+rnd(4)-2,
-    b.y+rnd(4)-2,
+    b.x+rnd(4)-2,
+    b.y+rnd(4)-2,
     rnd(2)*sgn(-b.vx),
     rnd(10)+1,
     rnd(b.r)
@@ -226,7 +201,7 @@ function update_bubbles(b)
  end
  b.vy -= grav
  b.vx += wave_speed
- 
+ 
  b.vx *= 0.5
  b.vy *= 0.5
  
@@ -303,7 +278,8 @@ end
 function wrap()
  wave_offset += wave_speed
  if wave_offset < -64 then wave_offset += 64 end
-if wave_offset > 64 then wave_offset -= 64 end
+
+ if wave_offset > 64 then wave_offset -= 64 end
 
  local r = 1000
  if player.x > r then
@@ -314,7 +290,8 @@ function wrap()
   end
  end
  if player.x < -r then
-  wrap_offset-= 1
+  wrap_offset
+= 1
   wave_offset += r
   for w in all(wraps) do
    w.x += r
@@ -326,6 +303,12 @@ function _update()
  
  -- ui stuff
  if btnp(4) then ui_visible = not ui_visible end
+ if btnp(5) then
+  palette += 1
+  if palette > #palettes then
+   palette -= #palettes
+  end
+ end
  
  if win then
   return
@@ -334,7 +317,9 @@ function _update()
 
  wrap()
  
- if menu_visible and cam.x > 50 or cam.x < -150 then
+ if menu_visible
+ and cam.x > (#palettes[palette][3]+#"sailin'")*4
+ or cam.x < -150 then
   menu_visible = false
  end
  
@@ -366,7 +351,7 @@ function _update()
  foreach(splashes, update_splashes)
  foreach(bubbles, update_bubbles)
  foreach(clouds, update_clouds)
- foreach(peeps, update_peeps)
+ foreach(peeps, update_peeps)
  
  -- people to rescue
  if #peeps < 1 and num_saved < num_needed then
@@ -407,7 +392,7 @@ function _update()
    player.vx += speed*sin(player.a)
    if not player.air then
     player.vy += speed*cos(player.a)
-   end
+   end
   else
    isle.vx += speed
   end
@@ -417,7 +402,7 @@ function _update()
  if num_saved < num_needed then
   if not player.air then
    if btnp(2) then
-    sfx(5,3)
+    sfx(5,3)
     cam.y += 5
     cam.x += 5
     player.vy = -10
@@ -437,14 +422,14 @@ function _update()
   player.va = atan2(wave(player.x+1.5) - wave(player.x-1.5), 3)-player.a
  end
  
-	player.vx = lerp(0,player.vx,0.8)
-	player.va = lerp(0,player.va,0.5)
-	
+ player.vx = lerp(0,player.vx,0.8)
+ player.va = lerp(0,player.va,0.5)
+ 
  player.vy += grav
  
  local pwave = wave(player.x)-8
  if (player.y-pwave) > 1 then
-  if player.air then
+  if player.air then
    sfx(5,3)
    cam.y -= 2
    player.air = false
@@ -529,49 +514,49 @@ function _update()
 end
 
 function draw_splashes(s)
- color(2)
+ color(palettes[palette][2])
  circfill(s.x,s.y,s.r)
- color(1)
+ color(palettes[palette][1])
  circ(s.x,s.y,s.r)
 end
 
-function draw_bubbles(b)
- color(2)
+function draw_bubbles(b)
+ color(palettes[palette][2])
  circfill(b.x,b.y,b.r)
- color(1)
+ color(palettes[palette][1])
  circfill(b.x,b.y,b.r-1)
 end
 
 function draw_bg()
 -- clear
  camera(0,0)
- color(2)
+ color(palettes[palette][2])
  rectfill(0,0,128,128)
  camera(-100,cam.y-player.y/20+64)
  
  --sun
  local offset = time()%512-128
- color(1)
+ color(palettes[palette][1])
  circfill(0,offset,5)
  for a=0,1,0.1 do
   line(0,offset,cos(a+time()/20)*10,offset+sin(a+time()/20)*10)
  end
  
  --moon + stars
- color(1)
+ color(palettes[palette][1])
  circfill(0,1+offset-256,8)
- circfill(-30,-10+offset-256,1)
- circfill(20,4+offset-256,1)
+ circfill(-30,-10+offset-256,1)
+ circfill(20,4+offset-256,1)
  circfill(10,24+offset-256,1)
- pset(30,-30+offset-256,1)
- pset(-26,-24+offset-256,1)
- color(2)
- circfill(4,-1+offset-256,8)
+ pset(30,-30+offset-256,palettes[palette][1])
+ pset(-26,-24+offset-256,palettes[palette][1])
+ color(palettes[palette][2])
+ circfill(4,-1+offset-256,8)
 end
 
 function draw_menu()
  if ui_visible then
-  print_ol("soda-pop sailin'", -16, -45, true)
+  print_ol(palettes[palette][3].." sailin'", -16, -45, true)
   print_ol("\139",-16,-35,not btn(0))
   print_ol("\145",0, -35,not btn(1))
   print_ol("\148",-8,-35,not btn(2))
@@ -582,22 +567,22 @@ end
 function draw_isle()
  isle.y += wave(isle.x)/3
  --body
- color(1)
- circfill(isle.x+5,isle.y+8,21)
-	color(2)
+ color(palettes[palette][1])
+ circfill(isle.x+5,isle.y+8,21)
+ color(palettes[palette][2])
  circfill(isle.x+5,isle.y+9,21)
  
-	color(1)
- circfill(isle.x-15,isle.y+5,16)
-	color(2)
+ color(palettes[palette][1])
+ circfill(isle.x-15,isle.y+5,16)
+ color(palettes[palette][2])
  circfill(isle.x-15,isle.y+6,16)
- 
-	color(1)
- circfill(isle.x+19,isle.y+5,10)
-	color(2)
+ 
+ color(palettes[palette][1])
+ circfill(isle.x+19,isle.y+5,10)
+ color(palettes[palette][2])
  circfill(isle.x+19,isle.y+6,10)
  
- color(1)
+ color(palettes[palette][1])
  --house
  print("\138",isle.x-18,isle.y-16)
  
@@ -616,7 +601,7 @@ function draw_isle()
  isle.y -= wave(isle.x)/3
  
  --boosers
- rect(isle.x-25,isle.y+11,isle.x+25,isle.y+13)
+ rect(isle.x-25,isle.y+11,isle.x+25,isle.y+13)
  rect(isle.x-20,isle.y+15,isle.x-10,isle.y+17)
  rect(isle.x-5,isle.y+15,isle.x+5,isle.y+17)
  rect(isle.x+10,isle.y+15,isle.x+20,isle.y+17)
@@ -634,13 +619,10 @@ function _draw()
  draw_boat()
  
  
- if menu_visible then
-  draw_menu()
- end
  
  foreach(splashes, draw_splashes)
  
-	draw_isle()
+ draw_isle()
  
  
  foreach(peeps, draw_peeps)
@@ -649,28 +631,28 @@ function _draw()
  foreach(bubbles, draw_bubbles)
  foreach(clouds, draw_clouds)
  
+ if menu_visible then
+  draw_menu()
+ end
  camera(0,0)
- 
  draw_ui()
- 
- draw_debug()
 
  --starfield
  if num_saved >= num_needed then
   camera(cam.x,cam.y)
-  color(1)
+  color(palettes[palette][1])
   for y=0,4,0.5 do
    line(cam.x,y*y-256,cam.x+128,y*y-256)
   end
   rectfill(cam.x,-256,cam.x+128,min(cam.y,-256))
-  color(2)
+  color(palettes[palette][2])
   
   if win and time() - win_time > 3 then
    camera(0,0)
    
-   color(2)
+   color(palettes[palette][2])
    circfill(64,256,200)
-   color(1)
+   color(palettes[palette][1])
    circfill(64,257,200)
    srand(17)
    for x=1,num_needed do
@@ -680,7 +662,7 @@ function _draw()
     print_ol("\138",rnd(100)+15,rnd(50)+64)
    end
    for x=1,10 do
-    pset(rnd(100)+15,rnd(50),2)
+    pset(rnd(100)+15,rnd(50),palettes[palette][2])
    end
    print_ol("\135 \135 \135",64-15,42)
    
@@ -708,27 +690,22 @@ function draw_ui()
   end
  
   local x1 = 2*sin(d)
-  local y1 = 2*cos(d)
+  local y1 = 2*cos(d)
   local x2 = 5
   local y2 = 115
-  color(2)
+  color(palettes[palette][2])
   for x=-1,1 do
   for y=-1,1 do
   line(x+x2-x1,y+y2-y1,x+x2+x1,y+y2+y1)
   end
   end
-  circfill(x2+x1,y2+y1,2) 
+  circfill(x2+x1,y2+y1,2)
 
-  color(1)
+
+  color(palettes[palette][1])
   line(x2-x1,y2-y1,x2+x1,y2+y1)
   circfill(x2+x1,y2+y1,1)
  end
-end
-
-function draw_debug()
- color(0)
- 
- cursor(1,1)
 end
 
 function draw_boat()
@@ -750,7 +727,7 @@ function draw_boat()
  aft.x = player.x - cos(player.a+0.25)*w
  aft.y = player.y + sin(player.a+0.25)*w
  
- color(1)
+ color(palettes[palette][1])
  line(player.x,player.y,mast.x,mast.y)
  line(player.x,player.y,prow.x,prow.y)
  line(player.x,player.y,aft.x,aft.y)
@@ -775,11 +752,11 @@ function draw_boat()
  
  line(lerp(player.x,d.x,-0.25),lerp(player.y,d.y,-0.25),player.oldx,player.oldy+h/2)
  circfill(player.oldx,player.oldy+h/2, 2) 
- for a=0.35,0.75,0.1 do
-  local ca1 = h*cos(a-0.1)
-  local sa1 = w*sin(a-0.1)
-  local ca2 = h*cos(a)
-  local sa2 = w*sin(a)
+ for a=0.35,0.75,0.1 do
+  local ca1 = h*cos(a-0.1)
+  local sa1 = w*sin(a-0.1)
+  local ca2 = h*cos(a)
+  local sa2 = w*sin(a)
   
   line(
    player.x + ca1*cpa - sa1*spa,
@@ -791,16 +768,16 @@ function draw_boat()
  end
 end
 
-function draw_waves()
- color(1)
+function draw_waves()
+ color(palettes[palette][1])
  rectfill(cam.x,10,cam.x+128,128)
- color(2)
+ color(palettes[palette][2])
  for x = cam.x,cam.x+128 do
   local w1 = wave(x)
-  local w2 = wave(x+1)
+  local w2 = wave(x+1)
   rectfill(x,-2+w1,x,3+w2)
  end
- color(1)
+ color(palettes[palette][1])
  for x = cam.x,cam.x+128 do
   local w1 = wave(x)
   local w2 = wave(x+1)
@@ -814,9 +791,9 @@ function draw_waves()
 end
 
 function draw_clouds(c)
- color(1)
+ color(palettes[palette][1])
  circ(c.x,c.y,c.r)
- color(2)
+ color(palettes[palette][2])
  circfill(c.x,c.y-1,c.r)
 end
 
@@ -830,18 +807,19 @@ end
 
 
 function print_ol(s,x,y,reverse)
- local c1 = 1
- local c2 = 2
+ local c1 = palettes[palette][1]
+ local c2 = palettes[palette][2]
  if reverse then
-  c1 = 2
-  c2 = 1
+  c1 = palettes[palette][2]
+  c2 = palettes[palette][1]
  end
  color(c2)
- print(s,x+1,y+1)
- print(s,x+1,y)
- print(s,x+1,y-1)
+ print(s,x+1,y+1)
+ print(s,x+1,y)
+
+ print(s,x+1,y-1)
  print(s,x,y+1)
- print(s,x,y-1)
+ print(s,x,y-1)
  print(s,x-1,y+1)
  print(s,x-1,y)
  print(s,x-1,y-1)
